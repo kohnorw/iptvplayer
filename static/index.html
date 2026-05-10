@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#080b10"/>
+  <title>Stream</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/css/app.css"/>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-screen" class="screen active">
+  <div class="login-bg"><div class="login-grid"></div></div>
+  <div class="login-box">
+    <div class="login-logo"><span class="logo-icon">▶</span><span class="logo-text"><span class="accent">STREAM</span></span></div>
+    <p class="login-sub">Enter your credentials</p>
+    <div class="field"><label>Username</label><input id="inp-user" type="text" placeholder="username" spellcheck="false" autocomplete="off"/></div>
+    <div class="field"><label>Password</label><input id="inp-pass" type="password" placeholder="password" autocomplete="off"/></div>
+    <button id="btn-login" class="btn-primary">Connect</button>
+    <div id="login-error" class="error-msg hidden"></div>
+  </div>
+  <div id="loading-overlay" class="loading-overlay hidden">
+    <div class="loading-card">
+      <div class="loading-logo"><span class="logo-icon">▶</span><span class="logo-text"><span class="accent">STREAM</span></span></div>
+      <div id="load-msg" class="load-msg">Connecting…</div>
+      <div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div>
+      <div id="load-detail" class="load-detail">&nbsp;</div>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app-screen" class="screen">
+  <header class="topbar">
+    <div class="topbar-logo"><span class="logo-icon-sm">▶</span><span style="color:var(--text)">STREAM</span></div>
+    <nav class="topbar-nav">
+      <button class="nav-btn active" data-tab="live">📡 Live TV</button>
+      <button class="nav-btn" data-tab="favourites">★ Favourites</button>
+      <button class="nav-btn" data-tab="guide">📋 Guide</button>
+      <button class="nav-btn" data-tab="settings">⚙ Settings</button>
+    </nav>
+    <div class="topbar-search"><span class="search-icon">⌕</span><input id="search-input" type="text" placeholder="Search channels…"/></div>
+    <button id="btn-logout" class="btn-logout">✕ Logout</button>
+  </header>
+
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <div class="bottom-nav-inner">
+      <button class="bnav-btn active" data-view="channels" onclick="mobileNav('channels')"><span class="bnav-icon">📺</span><span>Channels</span></button>
+      <button class="bnav-btn" data-view="player" onclick="mobileNav('player')"><span class="bnav-icon">🎬</span><span>Now Playing</span></button>
+      <button class="bnav-btn" data-view="favourites" onclick="mobileNav('favourites')"><span class="bnav-icon">★</span><span>Favourites</span></button>
+      <button class="bnav-btn" data-view="guide" onclick="mobileNav('guide')"><span class="bnav-icon">📋</span><span>Guide</span></button>
+      <button class="bnav-btn" data-view="settings" onclick="mobileNav('settings')"><span class="bnav-icon">⚙</span><span>Settings</span></button>
+    </div>
+  </nav>
+
+  <div class="app-body" id="app-body">
+    <aside class="sidebar"><div id="category-list" class="category-list"></div></aside>
+    <section class="channel-panel">
+      <div class="mobile-search">
+        <span class="search-icon">⌕</span>
+        <input id="mobile-search-input" type="text" placeholder="Search channels…"/>
+      </div>
+      <div id="channel-list" class="channel-list"></div>
+    </section>
+    <main class="player-panel">
+      <div class="player-wrap">
+        <div id="player-placeholder" class="player-placeholder"><span class="ph-icon">▶</span><span>Select a channel to watch</span></div>
+        <video id="video" controls playsinline></video>
+      </div>
+      <div id="now-playing" class="now-playing" style="display:none">
+        <div class="np-info"><span id="np-name" class="np-name"></span><span id="np-epg" class="np-epg"></span></div>
+        <button id="btn-fav" class="btn-fav">☆</button>
+      </div>
+      <div id="epg-strip" class="epg-strip"></div>
+    </main>
+  </div>
+
+  <!-- Favourites -->
+  <div id="tab-favourites" class="tab-overlay hidden">
+    <div class="tab-header"><h2>Favourites</h2><button class="tab-close" onclick="closeTab('favourites')">✕</button></div>
+    <div id="fav-body" class="tab-body"></div>
+  </div>
+
+  <!-- Guide — only favourites -->
+  <div id="tab-guide" class="tab-overlay hidden">
+    <div class="tab-header"><h2>TV Guide</h2><input id="guide-search" type="text" placeholder="Search…"/><button class="tab-close" onclick="closeTab('guide')">✕</button></div>
+    <div id="guide-body" class="tab-body"></div>
+  </div>
+
+  <!-- Settings -->
+  <div id="tab-settings" class="tab-overlay hidden">
+    <div class="tab-header"><h2>Settings</h2><button class="tab-close" onclick="closeTab('settings')">✕</button></div>
+    <div class="tab-body settings-body">
+      <div class="settings-section">
+        <h3>Account</h3>
+        <div id="acct-info" class="acct-info">Loading…</div>
+      </div>
+      <div class="settings-section">
+        <h3>Time Zone</h3>
+        <div class="field">
+          <label>Your Time Zone</label>
+          <select id="pref-timezone"></select>
+        </div>
+        <button class="btn-primary" onclick="savePrefs()">Save Settings</button>
+        <div id="prefs-msg" class="error-msg hidden" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>

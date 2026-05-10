@@ -1,0 +1,19 @@
+version: "3.8"
+services:
+  iptv-player:
+    build: .
+    image: iptv-player:latest
+    container_name: iptv-player
+    ports:
+      - "8080:8080"
+    volumes:
+      - iptv-data:/data
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - DATA_DIR=/data
+      - XC_HOST=http://192.168.1.124:3000
+    restart: unless-stopped
+    mem_limit: 768m     # headroom for multiple concurrent streams + audio transcoding
+volumes:
+  iptv-data:

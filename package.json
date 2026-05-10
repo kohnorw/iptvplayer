@@ -1,0 +1,9 @@
+{
+  "name": "iptv-player",
+  "version": "1.0.0",
+  "main": "app/server.js",
+  "scripts": { "start": "node app/server.js" },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
